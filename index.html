@@ -59,7 +59,7 @@ header{
   display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.5rem;
 }
 .die-btn{
-  aspect-ratio:0.7;background:var(--mantle);border:1px solid var(--surface0);
+  aspect-ratio:0.6;background:var(--mantle);border:1px solid var(--surface0);
   color:var(--subtext1);font-family:'JetBrains Mono',monospace;
   font-size:0.72rem;font-weight:500;cursor:pointer;border-radius:7px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -112,7 +112,7 @@ header{
 .weapon-list{display:flex;flex-direction:column;gap:5px;margin-bottom:0.5rem;}
 .weapon-card{
   background:var(--mantle);border:1px solid var(--surface0);border-radius:7px;
-  overflow:hidden;
+  overflow:visible;position:relative;
 }
 .weapon-header{
   display:flex;align-items:center;gap:6px;padding:0.4rem 0.55rem;cursor:pointer;
@@ -149,8 +149,8 @@ header{
 .w-menu-btn svg{width:16px;height:16px;fill:currentColor;}
 .w-dropdown{
   position:absolute;right:0;top:100%;background:var(--mantle);
-  border:1px solid var(--surface1);border-radius:5px;z-index:10;
-  min-width:100px;display:none;flex-direction:column;overflow:hidden;
+  border:1px solid var(--surface1);border-radius:5px;z-index:200;
+  min-width:100px;display:none;flex-direction:column;overflow:visible;
   box-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
 .w-dropdown.show{display:flex;}
@@ -458,16 +458,16 @@ function rollDie(sides) {
   let total, tag, breakdown = '', isCrit = false, isFail = false;
   let advData = null;
 
-  if (advMode !== 'normal' && sides === 20 && count === 1) {
-    const r2 = rnd(20);
+  if (advMode !== 'normal' && count === 1) {
+    const r2 = rnd(sides);
     const a = rolls[0], b = r2;
     const kept = advMode === 'adv' ? Math.max(a,b) : Math.min(a,b);
     const dropped = advMode === 'adv' ? Math.min(a,b) : Math.max(a,b);
     total = kept + mod;
     advData = {kept, dropped, mod};
-    tag = '1d20' + fmtMod(mod) + ' (' + (advMode === 'adv' ? 'advantage' : 'disadvantage') + ')';
-    if (kept === 20) isCrit = true;
-    if (kept === 1) isFail = true;
+    tag = '1d' + sides + fmtMod(mod) + ' (' + (advMode === 'adv' ? 'advantage' : 'disadvantage') + ')';
+    if (sides === 20 && kept === 20) isCrit = true;
+    if (sides === 20 && kept === 1) isFail = true;
   } else {
     const sum = rolls.reduce((a,b)=>a+b,0);
     total = sum + mod;
@@ -593,16 +593,17 @@ function rollNotation(str, isCrit = false, advModeOverride = 'normal') {
   let rolls = Array.from({length:count}, () => rnd(p.sides));
   let nat = null;
   
-  // Apply advantage/disadvantage only for single d20 rolls
-  if (advModeOverride !== 'normal' && count === 1 && p.sides === 20) {
-    const r2 = rnd(20);
+  // Apply advantage/disadvantage for single die rolls of any type
+  if (advModeOverride !== 'normal' && count === 1) {
+    const r2 = rnd(p.sides);
     const a = rolls[0], b = r2;
     const kept = advModeOverride === 'adv' ? Math.max(a,b) : Math.min(a,b);
     const dropped = advModeOverride === 'adv' ? Math.min(a,b) : Math.max(a,b);
     rolls = [kept];
-    nat = kept;
+    if (p.sides === 20) nat = kept;
     // Store dropped die info for display
     rolls.dropped = dropped;
+    rolls.advMode = advModeOverride;
   } else if (count === 1 && p.sides === 20) {
     nat = rolls[0];
   }
@@ -709,6 +710,12 @@ function rollWeapon(i, type) {
     const modMatch = (w.hit || '').match(/[+-](\d+)$/);
     const mod = modMatch ? parseInt(modMatch[1]) : 0;
     advData = {kept: hitResult.nat, dropped: hitResult.rolls.dropped, mod};
+  } else if (dmgResult && dmgResult.rolls && typeof dmgResult.rolls.dropped !== 'undefined' && !hitResult) {
+    // Show advantage for damage roll if no hit roll
+    const modMatch = (w.dmg || '').match(/[+-](\d+)$/);
+    const mod = modMatch ? parseInt(modMatch[1]) : 0;
+    const keptVal = dmgResult.rolls[0];
+    advData = {kept: keptVal, dropped: dmgResult.rolls.dropped, mod};
   }
 
   if (hitResult || dmgResult) {
