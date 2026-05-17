@@ -52,26 +52,26 @@ header{
 #panel-weapons{padding-top:0.5rem;padding-bottom:0.4rem;}
 
 /* Adv/Dis controls visible on both panels */
-.adv-controls-global{margin-bottom:0.65rem;}
+.adv-controls-global{margin-bottom:0.5rem;}
 
 /* ── DICE PANEL ── */
 .dice-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.65rem;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.5rem;
 }
 .die-btn{
-  aspect-ratio:1;background:var(--mantle);border:1px solid var(--surface0);
+  aspect-ratio:0.7;background:var(--mantle);border:1px solid var(--surface0);
   color:var(--subtext1);font-family:'JetBrains Mono',monospace;
-  font-size:0.78rem;font-weight:500;cursor:pointer;border-radius:7px;
+  font-size:0.72rem;font-weight:500;cursor:pointer;border-radius:7px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;transition:all .1s;
+  gap:1px;transition:all .1s;
 }
-.die-btn .k{font-size:0.54rem;color:var(--overlay0);}
+.die-btn .k{font-size:0.5rem;color:var(--overlay0);}
 .die-btn:hover{border-color:var(--mauve);color:var(--mauve);background:var(--surface0);}
 .die-btn:active{transform:scale(.95);}
 .die-btn.d20{border-color:var(--lavender);color:var(--lavender);}
 
 .controls-row{
-  display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.6rem;
+  display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;
 }
 .ctrl-label{font-size:0.62rem;color:var(--overlay0);margin-right:2px;}
 
@@ -91,7 +91,7 @@ header{
 }
 .mod-input:focus{outline:none;border-color:var(--mauve);}
 
-.adv-row{display:flex;gap:4px;margin-bottom:0.65rem;}
+.adv-row{display:flex;gap:4px;margin-bottom:0.5rem;}
 .adv-btn{
   flex:1;padding:0.28rem 0;background:var(--mantle);border:1px solid var(--surface0);
   color:var(--overlay1);font-family:'JetBrains Mono',monospace;
@@ -109,13 +109,13 @@ header{
 }
 
 /* ── WEAPONS PANEL ── */
-.weapon-list{display:flex;flex-direction:column;gap:5px;margin-bottom:0.6rem;}
+.weapon-list{display:flex;flex-direction:column;gap:5px;margin-bottom:0.5rem;}
 .weapon-card{
   background:var(--mantle);border:1px solid var(--surface0);border-radius:7px;
   overflow:hidden;
 }
 .weapon-header{
-  display:flex;align-items:center;gap:7px;padding:0.45rem 0.65rem;cursor:pointer;
+  display:flex;align-items:center;gap:6px;padding:0.4rem 0.55rem;cursor:pointer;
   transition:background .1s;
 }
 .weapon-header:hover{background:var(--surface0);}
@@ -124,7 +124,7 @@ header{
   padding:1px 5px;border-radius:3px;min-width:18px;text-align:center;
 }
 .w-name{flex:1;font-size:0.72rem;color:var(--subtext1);}
-.w-btns{display:flex;gap:4px;}
+.w-btns{display:flex;gap:4px;position:relative;}
 .w-roll-btn{
   padding:0.18rem 0.45rem;background:transparent;border:1px solid var(--surface1);
   color:var(--overlay2);font-family:'JetBrains Mono',monospace;font-size:0.58rem;
@@ -140,22 +140,33 @@ header{
   font-family:'JetBrains Mono',monospace;transition:all .1s;
 }
 .w-reorder:hover{border-color:var(--mauve);color:var(--mauve);}
-.w-edit{
-  background:none;border:1px solid var(--surface1);color:var(--overlay1);
-  cursor:pointer;font-size:0.58rem;padding:0.15rem 0.35rem;border-radius:3px;
-  font-family:'JetBrains Mono',monospace;transition:all .1s;
+.w-menu-btn{
+  background:none;border:none;color:var(--overlay1);cursor:pointer;
+  padding:0.15rem;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
 }
-.w-edit:hover{border-color:var(--green);color:var(--green);}
-.w-del{
-  background:none;border:none;color:var(--overlay0);cursor:pointer;
-  font-size:0.65rem;padding:0 2px;font-family:'JetBrains Mono',monospace;
-  transition:color .1s;
+.w-menu-btn:hover{background:var(--surface0);color:var(--text);}
+.w-menu-btn svg{width:16px;height:16px;fill:currentColor;}
+.w-dropdown{
+  position:absolute;right:0;top:100%;background:var(--mantle);
+  border:1px solid var(--surface1);border-radius:5px;z-index:10;
+  min-width:100px;display:none;flex-direction:column;overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
-.w-del:hover{color:var(--red);}
+.w-dropdown.show{display:flex;}
+.w-dropdown button{
+  background:none;border:none;color:var(--subtext1);
+  font-family:'JetBrains Mono',monospace;font-size:0.62rem;
+  padding:0.35rem 0.65rem;text-align:left;cursor:pointer;
+  display:flex;align-items:center;gap:6px;transition:background .1s;
+}
+.w-dropdown button:hover{background:var(--surface0);color:var(--text);}
+.w-dropdown button.danger:hover{background:rgba(243,139,168,0.15);color:var(--red);}
+.w-dropdown svg{width:14px;height:14px;fill:currentColor;}
 .w-last{
-  font-size:0.6rem;color:var(--overlay0);padding:0 0.65rem 0.35rem;
-  border-top:1px solid var(--surface0);padding-top:0.3rem;
-  display:flex;gap:0.65rem;
+  font-size:0.6rem;color:var(--overlay0);padding:0 0.55rem 0.3rem;
+  border-top:1px solid var(--surface0);padding-top:0.25rem;
+  display:flex;gap:0.55rem;
 }
 .w-last span{color:var(--subtext0);}
 .w-last .hit-val{color:var(--blue);}
@@ -166,7 +177,7 @@ header{
   display:flex;align-items:center;gap:5px;width:100%;
   background:var(--mantle);border:1px dashed var(--surface1);
   color:var(--overlay1);font-family:'JetBrains Mono',monospace;font-size:0.68rem;
-  padding:0.45rem 0.65rem;border-radius:7px;cursor:pointer;transition:all .1s;
+  padding:0.4rem 0.6rem;border-radius:7px;cursor:pointer;transition:all .1s;
 }
 .add-btn:hover{border-color:var(--mauve);color:var(--mauve);}
 
@@ -224,8 +235,9 @@ header{
 }
 .result-num.crit{color:var(--green);}
 .result-num.fail{color:var(--red);}
-.result-adv{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;gap:16px;align-items:baseline;}
+.result-adv{display:none;flex-direction:column;align-items:center;gap:4px;margin-bottom:8px;}
 .result-adv.show{display:flex !important;}
+.result-adv .dice-row{display:flex;gap:16px;align-items:baseline;}
 .result-adv .kept{font-size:5rem;font-weight:600;color:var(--mauve);line-height:1;}
 .result-adv .kept.crit{color:var(--green);}
 .result-adv .kept.fail{color:var(--red);}
@@ -325,8 +337,10 @@ kbd{
 <div class="result-pane">
   <div class="result-main">
     <div id="adv-display" class="result-adv">
-      <span class="kept" id="kept-num">—</span>
-      <span class="dropped" id="drop-num">—</span>
+      <div class="dice-row">
+        <span class="kept" id="kept-num">—</span>
+        <span class="dropped" id="drop-num">—</span>
+      </div>
     </div>
     <div class="result-num" id="result-num" style="display:block">—</div>
     <div class="result-tag" id="result-tag">pick a die</div>
@@ -730,8 +744,15 @@ function renderWeapons() {
           <button class="w-roll-btn dmg ${w.lastDmg!==null?'last':''}" onclick="rollWeapon(${i},'dmg')">dmg</button>
           <button class="w-reorder" onclick="moveWeapon(${i},-1)" title="Move up">↑</button>
           <button class="w-reorder" onclick="moveWeapon(${i},1)" title="Move down">↓</button>
-          <button class="w-edit" onclick="editWeapon(${i})" title="Edit">✎</button>
-          <button class="w-del" onclick="deleteWeapon(${i})" title="Delete">🗑</button>
+          <div style="position:relative;">
+            <button class="w-menu-btn" onclick="toggleWeaponMenu(event,${i})" title="Actions">
+              <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>
+            <div class="w-dropdown" id="w-drop-${i}">
+              <button onclick="editWeapon(${i})"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit</button>
+              <button class="danger" onclick="deleteWeapon(${i})"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="w-last">
@@ -741,8 +762,26 @@ function renderWeapons() {
       </div>
     </div>`;
   }).join('');
+  // Close any open menus after re-render
+  document.querySelectorAll('.w-dropdown').forEach(d => d.classList.remove('show'));
 }
 renderWeapons();
+
+// Toggle weapon action menu
+function toggleWeaponMenu(e, i) {
+  e.stopPropagation();
+  // Close all other menus first
+  document.querySelectorAll('.w-dropdown').forEach((d, idx) => {
+    if (idx !== i) d.classList.remove('show');
+  });
+  const menu = document.getElementById(`w-drop-${i}`);
+  menu.classList.toggle('show');
+}
+
+// Close menus when clicking elsewhere
+document.addEventListener('click', () => {
+  document.querySelectorAll('.w-dropdown').forEach(d => d.classList.remove('show'));
+});
 
 // ── KEYBOARD ──
 const DICE_KEYS = {'1':20,'2':10,'3':6,'4':8,'5':12,'6':4,'7':100};
