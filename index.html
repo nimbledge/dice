@@ -209,7 +209,8 @@ header{
 }
 .result-num.crit{color:var(--green);}
 .result-num.fail{color:var(--red);}
-.result-adv{display:flex;gap:16px;align-items:baseline;}
+.result-adv{display:none;gap:16px;align-items:baseline;}
+.result-adv.show{display:flex;}
 .result-adv .dropped{font-size:2.2rem;font-weight:600;color:var(--surface2);text-decoration:line-through;}
 .result-tag{font-size:0.7rem;color:var(--overlay0);margin-top:6px;text-align:center;}
 .result-break{font-size:0.7rem;color:var(--overlay1);margin-top:4px;text-align:center;}
@@ -298,7 +299,7 @@ kbd{
 <!-- RESULT PANE (always visible) -->
 <div class="result-pane">
   <div class="result-main">
-    <div id="adv-display" class="result-adv" style="display:none">
+    <div id="adv-display" class="result-adv">
       <span class="result-num" id="kept-num">—</span>
       <span class="dropped" id="drop-num">—</span>
     </div>
@@ -350,7 +351,8 @@ kbd{
   <span class="hint"><kbd>tab</kbd> switch panel</span>
   <span class="hint"><kbd>1</kbd>d20 <kbd>2</kbd>d10 <kbd>3</kbd>d6 <kbd>4</kbd>d8 <kbd>5</kbd>d12 <kbd>6</kbd>d4 <kbd>7</kbd>d%</span>
   <span class="hint"><kbd>space</kbd> re-roll</span>
-  <span class="hint"><kbd>=</kbd><kbd>-</kbd> dice count</span>
+  <span class="hint"><kbd>=</kbd><kbd>-</kbd> count &nbsp;·&nbsp; <kbd>↑</kbd><kbd>↓</kbd> count</span>
+  <span class="hint"><kbd>shift</kbd>+<kbd>=/-</kbd> mod &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> mod</span>
   <span class="hint"><kbd>Q/W/E</kbd> normal·adv·dis</span>
   <span class="hint"><kbd>1–9</kbd> weapon (weapons tab)</span>
 </div>
@@ -386,6 +388,13 @@ function rnd(n) { return Math.floor(Math.random() * n) + 1; }
 function changeCount(d) {
   diceCount = Math.max(1, Math.min(20, diceCount + d));
   document.getElementById('count-display').textContent = diceCount;
+}
+
+function changeMod(d) {
+  const modInput = document.getElementById('modifier');
+  let val = parseInt(modInput.value) || 0;
+  val += d;
+  modInput.value = val >= 0 ? '+' + val : val;
 }
 
 function rollDie(sides) {
@@ -437,14 +446,17 @@ function showResult(total, tag, breakdown, isCrit, isFail, advData) {
 
   if (advData) {
     numEl.style.display = 'none';
-    advEl.style.display = 'flex';
+    advEl.classList.add('show');
     keptEl.className = cls;
     keptEl.textContent = advData.kept + fmtMod(advData.mod);
     dropEl.textContent = advData.dropped;
     advEl.classList.add('flash');
-    setTimeout(() => advEl.classList.remove('flash'), 200);
+    setTimeout(() => {
+      advEl.classList.remove('flash');
+      advEl.classList.remove('show');
+    }, 200);
   } else {
-    advEl.style.display = 'none';
+    advEl.classList.remove('show');
     numEl.style.display = 'block';
     numEl.className = cls;
     numEl.textContent = total;
@@ -606,8 +618,20 @@ document.addEventListener('keydown', e => {
   if (currentTab === 'dice') {
     if (DICE_KEYS[key]) { rollDie(DICE_KEYS[key]); return; }
     if (key === ' ') { e.preventDefault(); rollDie(lastDie); return; }
-    if (key === '=' || key === '+') { changeCount(1); return; }
-    if (key === '-') { changeCount(-1); return; }
+    
+    // Count controls: normal -/= and Up/Down arrows
+    if (key === '=' || key === '+' || key === 'ArrowUp') { 
+      if (!e.shiftKey) { changeCount(1); return; }
+    }
+    if (key === '-' || key === 'ArrowDown') { 
+      if (!e.shiftKey) { changeCount(-1); return; }
+    }
+    
+    // Mod controls: Shift + -/= and Left/Right arrows
+    if (e.shiftKey && (key === '=' || key === '+')) { changeMod(1); return; }
+    if (e.shiftKey && key === '-') { changeMod(-1); return; }
+    if (key === 'ArrowLeft') { changeMod(-1); return; }
+    if (key === 'ArrowRight') { changeMod(1); return; }
   }
 
   if (currentTab === 'weapons') {
