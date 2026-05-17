@@ -201,7 +201,7 @@ header{
 }
 .result-main{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  flex:1;
+  flex:1;position:relative;height:100%;
 }
 .result-num{
   font-size:5rem;font-weight:600;color:var(--mauve);line-height:1;
@@ -209,8 +209,11 @@ header{
 }
 .result-num.crit{color:var(--green);}
 .result-num.fail{color:var(--red);}
-.result-adv{display:none;gap:16px;align-items:baseline;}
-.result-adv.show{display:flex;}
+.result-adv{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;gap:16px;align-items:baseline;}
+.result-adv.show{display:flex !important;}
+.result-adv .kept{font-size:5rem;font-weight:600;color:var(--mauve);line-height:1;}
+.result-adv .kept.crit{color:var(--green);}
+.result-adv .kept.fail{color:var(--red);}
 .result-adv .dropped{font-size:2.2rem;font-weight:600;color:var(--surface2);text-decoration:line-through;}
 .result-tag{font-size:0.7rem;color:var(--overlay0);margin-top:6px;text-align:center;}
 .result-break{font-size:0.7rem;color:var(--overlay1);margin-top:4px;text-align:center;}
@@ -271,12 +274,10 @@ kbd{
 
   <div class="controls-row">
     <span class="ctrl-label">count</span>
-    <button class="count-btn" onclick="changeCount(-1)">−</button>
-    <span id="count-display">1</span>
-    <button class="count-btn" onclick="changeCount(1)">+</button>
-    <span style="width:1px;height:18px;background:var(--surface0);margin:0 4px;"></span>
+    <input type="text" id="diceCount" value="1" style="width:40px;text-align:center;background:var(--surface0);border:none;border-radius:4px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.75rem;"/>
+    <span style="width:1px;height:18px;background:var(--surface0);margin:0 8px;"></span>
     <span class="ctrl-label">mod</span>
-    <input class="mod-input" type="number" id="modifier" value="0" min="-99" max="99"/>
+    <input class="mod-input" type="text" id="modifier" value="+0"/>
   </div>
 
   <div class="adv-row">
@@ -300,7 +301,7 @@ kbd{
 <div class="result-pane">
   <div class="result-main">
     <div id="adv-display" class="result-adv">
-      <span class="result-num" id="kept-num">—</span>
+      <span class="kept" id="kept-num">—</span>
       <span class="dropped" id="drop-num">—</span>
     </div>
     <div class="result-num" id="result-num" style="display:block">—</div>
@@ -354,12 +355,14 @@ kbd{
   <span class="hint"><kbd>=</kbd><kbd>-</kbd> count &nbsp;·&nbsp; <kbd>↑</kbd><kbd>↓</kbd> count</span>
   <span class="hint"><kbd>shift</kbd>+<kbd>=/-</kbd> mod &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> mod</span>
   <span class="hint"><kbd>Q/W/E</kbd> normal·adv·dis</span>
+  <span class="hint"><kbd>Z/Y</kbd> undo/redo</span>
   <span class="hint"><kbd>1–9</kbd> weapon (weapons tab)</span>
 </div>
 
 <script>
 let lastDie = 20, diceCount = 1, advMode = 'normal';
 let history = [];
+let redoStack = [];
 let weapons = JSON.parse(localStorage.getItem('dnd_weapons2') || '[]');
 let currentTab = 'dice';
 
@@ -386,22 +389,25 @@ setAdv('normal');
 function rnd(n) { return Math.floor(Math.random() * n) + 1; }
 
 function changeCount(d) {
-  diceCount = Math.max(1, Math.min(20, diceCount + d));
-  document.getElementById('count-display').textContent = diceCount;
+  const countInput = document.getElementById('diceCount');
+  let val = parseInt(countInput.value) || 1;
+  val = Math.max(1, val + d);
+  countInput.value = val;
 }
 
 function changeMod(d) {
   const modInput = document.getElementById('modifier');
-  let val = parseInt(modInput.value) || 0;
+  let val = parseInt(modInput.value.replace('+', '')) || 0;
   val += d;
-  modInput.value = val >= 0 ? '+' + val : val;
+  modInput.value = (val >= 0 ? '+' : '') + val;
 }
 
 function rollDie(sides) {
   if (!sides || sides < 2) sides = lastDie;
   lastDie = sides;
-  const mod = parseInt(document.getElementById('modifier').value) || 0;
-  const count = diceCount;
+  const mod = parseInt(document.getElementById('modifier').value.replace('+', '')) || 0;
+  const countInput = document.getElementById('diceCount');
+  const count = parseInt(countInput.value) || 1;
   const rolls = Array.from({length: count}, () => rnd(sides));
 
   let total, tag, breakdown = '', isCrit = false, isFail = false;
@@ -447,16 +453,16 @@ function showResult(total, tag, breakdown, isCrit, isFail, advData) {
   if (advData) {
     numEl.style.display = 'none';
     advEl.classList.add('show');
-    keptEl.className = cls;
+    keptEl.className = 'kept' + (isCrit ? ' crit' : isFail ? ' fail' : '');
     keptEl.textContent = advData.kept + fmtMod(advData.mod);
     dropEl.textContent = advData.dropped;
     advEl.classList.add('flash');
     setTimeout(() => {
       advEl.classList.remove('flash');
-      advEl.classList.remove('show');
     }, 200);
   } else {
     advEl.classList.remove('show');
+    advEl.style.display = 'none';
     numEl.style.display = 'block';
     numEl.className = cls;
     numEl.textContent = total;
@@ -472,7 +478,50 @@ function showResult(total, tag, breakdown, isCrit, isFail, advData) {
 
 function addHistory(entry) {
   history.unshift(entry);
+  redoStack = []; // clear redo stack on new action
   if (history.length > 10) history.pop();
+  document.getElementById('history').innerHTML =
+    history.map(h => `<span class="hchip">${h}</span>`).join('');
+}
+
+function undo() {
+  if (history.length === 0) return;
+  const last = history.shift();
+  redoStack.unshift(last);
+  if (history.length === 0) {
+    document.getElementById('result-num').style.display = 'block';
+    document.getElementById('result-num').textContent = '—';
+    document.getElementById('result-tag').textContent = 'pick a die';
+    document.getElementById('result-break').textContent = '';
+    document.getElementById('crit-flag').textContent = '';
+    document.getElementById('adv-display').classList.remove('show');
+    document.getElementById('result-weapon').style.display = 'none';
+  } else {
+    const prev = history[0];
+    const match = prev.match(/^(.+) = (\d+)$/);
+    if (match) {
+      const tag = match[1];
+      const total = parseInt(match[2]);
+      showResult(total, tag, '', false, false, null);
+      document.getElementById('result-weapon').style.display = 'none';
+    }
+  }
+  document.getElementById('history').innerHTML =
+    history.map(h => `<span class="hchip">${h}</span>`).join('');
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  const next = redoStack.shift();
+  history.unshift(next);
+  if (history.length > 10) history.pop();
+  const match = next.match(/^(.+) = (\d+)$/);
+  if (match) {
+    const tag = match[1];
+    const total = parseInt(match[2]);
+    showResult(total, tag, '', false, false, null);
+    document.getElementById('result-weapon').style.display = 'none';
+  }
   document.getElementById('history').innerHTML =
     history.map(h => `<span class="hchip">${h}</span>`).join('');
 }
@@ -614,18 +663,23 @@ document.addEventListener('keydown', e => {
   if (kl === 'q') { setAdv('normal'); return; }
   if (kl === 'w') { setAdv('adv'); return; }
   if (kl === 'e') { setAdv('dis'); return; }
+  
+  if (kl === 'z') { undo(); return; }
+  if (kl === 'y') { redo(); return; }
 
   if (currentTab === 'dice') {
     if (DICE_KEYS[key]) { rollDie(DICE_KEYS[key]); return; }
     if (key === ' ') { e.preventDefault(); rollDie(lastDie); return; }
     
     // Count controls: normal -/= and Up/Down arrows
-    if (key === '=' || key === '+' || key === 'ArrowUp') { 
+    if (key === '=' || key === '+') { 
       if (!e.shiftKey) { changeCount(1); return; }
     }
-    if (key === '-' || key === 'ArrowDown') { 
+    if (key === '-') { 
       if (!e.shiftKey) { changeCount(-1); return; }
     }
+    if (key === 'ArrowUp') { changeCount(1); return; }
+    if (key === 'ArrowDown') { changeCount(-1); return; }
     
     // Mod controls: Shift + -/= and Left/Right arrows
     if (e.shiftKey && (key === '=' || key === '+')) { changeMod(1); return; }
