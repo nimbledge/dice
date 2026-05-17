@@ -51,6 +51,9 @@ header{
 #panel-dice{padding-top:0.5rem;padding-bottom:0.4rem;}
 #panel-weapons{padding-top:0.5rem;padding-bottom:0.4rem;}
 
+/* Adv/Dis controls visible on both panels */
+.adv-controls-global{margin-bottom:0.65rem;}
+
 /* ── DICE PANEL ── */
 .dice-grid{
   display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.65rem;
@@ -131,6 +134,18 @@ header{
 .w-roll-btn.dmg:hover{border-color:var(--peach);color:var(--peach);}
 .w-roll-btn.hit.last{border-color:var(--blue);color:var(--blue);}
 .w-roll-btn.dmg.last{border-color:var(--peach);color:var(--peach);}
+.w-reorder{
+  background:none;border:1px solid var(--surface1);color:var(--overlay1);
+  cursor:pointer;font-size:0.58rem;padding:0.15rem 0.35rem;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;transition:all .1s;
+}
+.w-reorder:hover{border-color:var(--mauve);color:var(--mauve);}
+.w-edit{
+  background:none;border:1px solid var(--surface1);color:var(--overlay1);
+  cursor:pointer;font-size:0.58rem;padding:0.15rem 0.35rem;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;transition:all .1s;
+}
+.w-edit:hover{border-color:var(--green);color:var(--green);}
 .w-del{
   background:none;border:none;color:var(--overlay0);cursor:pointer;
   font-size:0.65rem;padding:0 2px;font-family:'JetBrains Mono',monospace;
@@ -280,10 +295,12 @@ kbd{
     <input class="mod-input" type="text" id="modifier" value="+0"/>
   </div>
 
-  <div class="adv-row">
-    <button class="adv-btn on-norm" id="btn-norm" onclick="setAdv('normal')">normal <span style="color:var(--overlay0);font-size:0.58rem;">[Q]</span></button>
-    <button class="adv-btn" id="btn-adv" onclick="setAdv('adv')">adv <span style="color:var(--overlay0);font-size:0.58rem;">[W]</span></button>
-    <button class="adv-btn" id="btn-dis" onclick="setAdv('dis')">dis <span style="color:var(--overlay0);font-size:0.58rem;">[E]</span></button>
+  <div class="adv-controls-global">
+    <div class="adv-row">
+      <button class="adv-btn on-norm" id="btn-norm" onclick="setAdv('normal')">normal <span style="color:var(--overlay0);font-size:0.58rem;">[Q]</span></button>
+      <button class="adv-btn" id="btn-adv" onclick="setAdv('adv')">adv <span style="color:var(--overlay0);font-size:0.58rem;">[W]</span></button>
+      <button class="adv-btn" id="btn-dis" onclick="setAdv('dis')">dis <span style="color:var(--overlay0);font-size:0.58rem;">[E]</span></button>
+    </div>
   </div>
 
   <div class="history" id="history"></div>
@@ -291,6 +308,13 @@ kbd{
 
 <!-- WEAPONS PANEL -->
 <div class="panel" id="panel-weapons">
+  <div class="adv-controls-global">
+    <div class="adv-row">
+      <button class="adv-btn on-norm" id="btn-norm-w" onclick="setAdv('normal')">normal <span style="color:var(--overlay0);font-size:0.58rem;">[Q]</span></button>
+      <button class="adv-btn" id="btn-adv-w" onclick="setAdv('adv')">adv <span style="color:var(--overlay0);font-size:0.58rem;">[W]</span></button>
+      <button class="adv-btn" id="btn-dis-w" onclick="setAdv('dis')">dis <span style="color:var(--overlay0);font-size:0.58rem;">[E]</span></button>
+    </div>
+  </div>
   <div class="weapon-list" id="weapon-list">
     <div class="empty" id="w-empty">no weapons saved — add one below</div>
   </div>
@@ -382,6 +406,13 @@ function setAdv(mode) {
   document.getElementById('btn-norm').className = 'adv-btn' + (mode === 'normal' ? ' on-norm' : '');
   document.getElementById('btn-adv').className  = 'adv-btn' + (mode === 'adv'    ? ' on-adv'  : '');
   document.getElementById('btn-dis').className  = 'adv-btn' + (mode === 'dis'    ? ' on-dis'  : '');
+  // Update weapons panel buttons too
+  const btnNormW = document.getElementById('btn-norm-w');
+  const btnAdvW = document.getElementById('btn-adv-w');
+  const btnDisW = document.getElementById('btn-dis-w');
+  if (btnNormW) btnNormW.className = 'adv-btn' + (mode === 'normal' ? ' on-norm' : '');
+  if (btnAdvW) btnAdvW.className = 'adv-btn' + (mode === 'adv' ? ' on-adv' : '');
+  if (btnDisW) btnDisW.className = 'adv-btn' + (mode === 'dis' ? ' on-dis' : '');
 }
 setAdv('normal');
 
@@ -474,6 +505,9 @@ function showResult(total, tag, breakdown, isCrit, isFail, advData) {
   breakEl.textContent = breakdown;
   critEl.className = 'crit-flag' + (isFail ? ' fail' : '');
   critEl.textContent = isCrit ? '★ natural 20' : isFail ? '☆ natural 1' : '';
+  
+  // Keep adv display visible until next roll clears it
+  // Don't hide it automatically
 }
 
 function addHistory(entry) {
@@ -535,25 +569,51 @@ function parseNotation(str) {
   return {count:+m[1], sides:+m[2], mod:+(m[3]||0)};
 }
 
-function rollNotation(str, isCrit = false) {
+function rollNotation(str, isCrit = false, advModeOverride = 'normal') {
   const p = parseNotation(str);
   if (!p) return null;
   let count = p.count;
   // On crit, double the dice but keep the same modifier
   if (isCrit) count = p.count * 2;
-  const rolls = Array.from({length:count}, () => rnd(p.sides));
+  
+  let rolls = Array.from({length:count}, () => rnd(p.sides));
+  let nat = null;
+  
+  // Apply advantage/disadvantage only for single d20 rolls
+  if (advModeOverride !== 'normal' && count === 1 && p.sides === 20) {
+    const r2 = rnd(20);
+    const a = rolls[0], b = r2;
+    const kept = advModeOverride === 'adv' ? Math.max(a,b) : Math.min(a,b);
+    const dropped = advModeOverride === 'adv' ? Math.min(a,b) : Math.max(a,b);
+    rolls = [kept];
+    nat = kept;
+    // Store dropped die info for display
+    rolls.dropped = dropped;
+  } else if (count === 1 && p.sides === 20) {
+    nat = rolls[0];
+  }
+  
   const total = rolls.reduce((a,b)=>a+b,0) + p.mod;
-  const nat = p.count === 1 && p.sides === 20 ? rolls[0] : null;
   return {total, rolls, nat};
 }
 
+// For regular dice rolling (not weapon attacks)
+function rollNotationSimple(str, isCrit = false) {
+  return rollNotation(str, isCrit, 'normal');
+}
+
+let editIndex = null;
+
 function openModal() {
+  editIndex = null;
   document.getElementById('modal').classList.add('open');
   document.getElementById('w-name').focus();
 }
+
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
   ['w-name','w-hit','w-dmg'].forEach(id => document.getElementById(id).value = '');
+  editIndex = null;
 }
 
 function saveWeapon() {
@@ -563,9 +623,35 @@ function saveWeapon() {
   if (!name || !dmg) return;
   if (hit && !parseNotation(hit)) { alert('invalid to-hit notation'); return; }
   if (!parseNotation(dmg)) { alert('invalid damage notation'); return; }
-  weapons.push({name, hit: hit||'', dmg, lastHit:null, lastDmg:null});
+  
+  if (editIndex !== null) {
+    // Update existing weapon
+    weapons[editIndex] = { ...weapons[editIndex], name, hit: hit||'', dmg };
+  } else {
+    // Add new weapon
+    weapons.push({name, hit: hit||'', dmg, lastHit:null, lastDmg:null});
+  }
+  
   localStorage.setItem('dnd_weapons2', JSON.stringify(weapons));
   closeModal();
+  renderWeapons();
+}
+
+function editWeapon(i) {
+  const w = weapons[i];
+  document.getElementById('w-name').value = w.name;
+  document.getElementById('w-hit').value = w.hit || '';
+  document.getElementById('w-dmg').value = w.dmg;
+  editIndex = i;
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('w-name').focus();
+}
+
+function moveWeapon(i, dir) {
+  const newIndex = i + dir;
+  if (newIndex < 0 || newIndex >= weapons.length) return;
+  [weapons[i], weapons[newIndex]] = [weapons[newIndex], weapons[i]];
+  localStorage.setItem('dnd_weapons2', JSON.stringify(weapons));
   renderWeapons();
 }
 
@@ -581,7 +667,8 @@ function rollWeapon(i, type) {
 
   if (type === 'both' || type === 'hit') {
     if (w.hit) {
-      hitResult = rollNotation(w.hit);
+      // Apply advantage/disadvantage to weapon attack rolls
+      hitResult = rollNotation(w.hit, false, advMode);
       weapons[i].lastHit = hitResult.total;
     }
   }
@@ -601,8 +688,17 @@ function rollWeapon(i, type) {
   const displayVal = hitResult ? hitResult.total : (dmgResult ? dmgResult.total : 0);
   const tag = type === 'hit' ? w.name + ' to hit' : type === 'dmg' ? w.name + ' dmg' : w.name;
 
+  // Build advData for advantage/disadvantage display
+  let advData = null;
+  if (hitResult && hitResult.rolls && typeof hitResult.rolls.dropped !== 'undefined') {
+    // Extract modifier from the hit notation
+    const modMatch = (w.hit || '').match(/[+-](\d+)$/);
+    const mod = modMatch ? parseInt(modMatch[1]) : 0;
+    advData = {kept: hitResult.nat, dropped: hitResult.rolls.dropped, mod};
+  }
+
   if (hitResult || dmgResult) {
-    showResult(displayVal, tag, '', isCrit, isFail, null);
+    showResult(displayVal, tag, '', isCrit, isFail, advData);
     if (hitResult && dmgResult) {
       document.getElementById('result-weapon').style.display = 'block';
       document.getElementById('rw-name').textContent = w.name;
@@ -632,7 +728,10 @@ function renderWeapons() {
         <div class="w-btns" onclick="event.stopPropagation()">
           ${hasHit ? `<button class="w-roll-btn hit ${w.lastHit!==null?'last':''}" onclick="rollWeapon(${i},'hit')">hit</button>` : ''}
           <button class="w-roll-btn dmg ${w.lastDmg!==null?'last':''}" onclick="rollWeapon(${i},'dmg')">dmg</button>
-          <button class="w-del" onclick="deleteWeapon(${i})">✕</button>
+          <button class="w-reorder" onclick="moveWeapon(${i},-1)" title="Move up">↑</button>
+          <button class="w-reorder" onclick="moveWeapon(${i},1)" title="Move down">↓</button>
+          <button class="w-edit" onclick="editWeapon(${i})" title="Edit">✎</button>
+          <button class="w-del" onclick="deleteWeapon(${i})" title="Delete">🗑</button>
         </div>
       </div>
       <div class="w-last">
