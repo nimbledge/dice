@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,788 +6,620 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>dice roller</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root {
+  --base:#1e1e2e;--mantle:#181825;--crust:#11111b;
+  --surface0:#313244;--surface1:#45475a;--surface2:#585b70;
+  --overlay0:#6c7086;--overlay1:#7f849c;--overlay2:#9399b2;
+  --text:#cdd6f4;--subtext0:#a6adc8;--subtext1:#bac2de;
+  --lavender:#b4befe;--blue:#89b4fa;--sapphire:#74c7ec;
+  --teal:#94e2d5;--green:#a6e3a1;--yellow:#f9e2af;
+  --peach:#fab387;--red:#f38ba8;--mauve:#cba6f7;--pink:#f5c2e7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--base);color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  display:grid;
+  grid-template-columns:1fr 260px;
+  grid-template-rows:auto 1fr auto;
+  grid-template-areas:"header result" "left result" "hints hints";
+  height:100vh;
+  overflow:hidden;
+}
 
-  :root {
-    --base: #1e1e2e;
-    --mantle: #181825;
-    --crust: #11111b;
-    --surface0: #313244;
-    --surface1: #45475a;
-    --surface2: #585b70;
-    --overlay0: #6c7086;
-    --overlay1: #7f849c;
-    --overlay2: #9399b2;
-    --text: #cdd6f4;
-    --subtext0: #a6adc8;
-    --subtext1: #bac2de;
-    --lavender: #b4befe;
-    --blue: #89b4fa;
-    --sapphire: #74c7ec;
-    --sky: #89dceb;
-    --teal: #94e2d5;
-    --green: #a6e3a1;
-    --yellow: #f9e2af;
-    --peach: #fab387;
-    --maroon: #eba0ac;
-    --red: #f38ba8;
-    --mauve: #cba6f7;
-    --pink: #f5c2e7;
-    --flamingo: #f2cdcd;
-    --rosewater: #f5e0dc;
-  }
+/* ── HEADER ── */
+header{
+  grid-area:header;
+  padding:1rem 1.25rem 0.75rem;
+  border-bottom:1px solid var(--surface0);
+  display:flex;align-items:center;gap:0;
+}
+.tabs{display:flex;gap:0;background:var(--mantle);border-radius:7px;padding:3px;}
+.tab{
+  padding:0.35rem 1rem;border:none;background:transparent;
+  color:var(--overlay1);font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;cursor:pointer;border-radius:5px;transition:all .15s;
+}
+.tab.active{background:var(--surface0);color:var(--mauve);}
+.tab:hover:not(.active){color:var(--subtext1);}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── LEFT PANELS ── */
+.panel{display:none;grid-area:left;overflow-y:auto;padding:1rem 1.25rem 1rem;}
+.panel.active{display:block;}
 
-  body {
-    background: var(--base);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2rem 1rem 4rem;
-  }
+/* ── DICE PANEL ── */
+.dice-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:0.85rem;
+}
+.die-btn{
+  aspect-ratio:1;background:var(--mantle);border:1px solid var(--surface0);
+  color:var(--subtext1);font-family:'JetBrains Mono',monospace;
+  font-size:0.82rem;font-weight:500;cursor:pointer;border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;transition:all .1s;
+}
+.die-btn .k{font-size:0.58rem;color:var(--overlay0);}
+.die-btn:hover{border-color:var(--mauve);color:var(--mauve);background:var(--surface0);}
+.die-btn:active{transform:scale(.95);}
+.die-btn.d20{border-color:var(--lavender);color:var(--lavender);}
 
-  header {
-    width: 100%;
-    max-width: 680px;
-    display: flex;
-    align-items: baseline;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--surface0);
-    padding-bottom: 1rem;
-  }
+.controls-row{
+  display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.75rem;
+}
+.ctrl-label{font-size:0.65rem;color:var(--overlay0);margin-right:2px;}
 
-  header h1 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--mauve);
-    letter-spacing: 0.05em;
-  }
+.count-btn{
+  width:26px;height:26px;background:var(--mantle);border:1px solid var(--surface0);
+  color:var(--subtext1);font-family:'JetBrains Mono',monospace;font-size:0.9rem;
+  cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
+}
+.count-btn:hover{border-color:var(--mauve);color:var(--mauve);}
+#count-display{font-size:0.82rem;min-width:18px;text-align:center;}
 
-  header span {
-    font-size: 0.7rem;
-    color: var(--overlay0);
-  }
+.mod-input{
+  width:58px;background:var(--mantle);border:1px solid var(--surface0);
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.8rem;
+  padding:0.3rem 0.4rem;border-radius:5px;text-align:center;
+}
+.mod-input:focus{outline:none;border-color:var(--mauve);}
 
-  .tabs {
-    display: flex;
-    gap: 0;
-    width: 100%;
-    max-width: 680px;
-    margin-bottom: 1.5rem;
-    background: var(--mantle);
-    border-radius: 8px;
-    padding: 3px;
-  }
+.adv-row{display:flex;gap:5px;margin-bottom:0.85rem;}
+.adv-btn{
+  flex:1;padding:0.32rem 0;background:var(--mantle);border:1px solid var(--surface0);
+  color:var(--overlay1);font-family:'JetBrains Mono',monospace;
+  font-size:0.67rem;cursor:pointer;border-radius:6px;transition:all .1s;
+}
+.adv-btn:hover{border-color:var(--surface2);color:var(--subtext1);}
+.adv-btn.on-norm{border-color:var(--overlay1);color:var(--subtext1);}
+.adv-btn.on-adv{border-color:var(--green);color:var(--green);background:var(--surface0);}
+.adv-btn.on-dis{border-color:var(--red);color:var(--red);background:var(--surface0);}
 
-  .tab {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    background: transparent;
-    color: var(--overlay1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.15s;
-    letter-spacing: 0.03em;
-  }
+.history{display:flex;flex-wrap:wrap;gap:4px;margin-top:0.5rem;}
+.hchip{
+  font-size:0.62rem;background:var(--mantle);border:1px solid var(--surface0);
+  color:var(--overlay1);padding:2px 7px;border-radius:4px;
+}
 
-  .tab.active {
-    background: var(--surface0);
-    color: var(--mauve);
-  }
+/* ── WEAPONS PANEL ── */
+.weapon-list{display:flex;flex-direction:column;gap:6px;margin-bottom:0.75rem;}
+.weapon-card{
+  background:var(--mantle);border:1px solid var(--surface0);border-radius:8px;
+  overflow:hidden;
+}
+.weapon-header{
+  display:flex;align-items:center;gap:8px;padding:0.55rem 0.75rem;cursor:pointer;
+  transition:background .1s;
+}
+.weapon-header:hover{background:var(--surface0);}
+.w-key{
+  font-size:0.62rem;background:var(--surface1);color:var(--overlay2);
+  padding:1px 6px;border-radius:3px;min-width:20px;text-align:center;
+}
+.w-name{flex:1;font-size:0.78rem;color:var(--subtext1);}
+.w-btns{display:flex;gap:5px;}
+.w-roll-btn{
+  padding:0.2rem 0.55rem;background:transparent;border:1px solid var(--surface1);
+  color:var(--overlay2);font-family:'JetBrains Mono',monospace;font-size:0.62rem;
+  cursor:pointer;border-radius:4px;transition:all .1s;
+}
+.w-roll-btn.hit:hover{border-color:var(--blue);color:var(--blue);}
+.w-roll-btn.dmg:hover{border-color:var(--peach);color:var(--peach);}
+.w-roll-btn.hit.last{border-color:var(--blue);color:var(--blue);}
+.w-roll-btn.dmg.last{border-color:var(--peach);color:var(--peach);}
+.w-del{
+  background:none;border:none;color:var(--overlay0);cursor:pointer;
+  font-size:0.72rem;padding:0 2px;font-family:'JetBrains Mono',monospace;
+  transition:color .1s;
+}
+.w-del:hover{color:var(--red);}
+.w-last{
+  font-size:0.65rem;color:var(--overlay0);padding:0 0.75rem 0.45rem;
+  border-top:1px solid var(--surface0);padding-top:0.35rem;
+  display:flex;gap:0.75rem;
+}
+.w-last span{color:var(--subtext0);}
+.w-last .hit-val{color:var(--blue);}
+.w-last .dmg-val{color:var(--peach);}
 
-  .tab:hover:not(.active) { color: var(--subtext1); }
+/* Add weapon modal */
+.add-btn{
+  display:flex;align-items:center;gap:6px;width:100%;
+  background:var(--mantle);border:1px dashed var(--surface1);
+  color:var(--overlay1);font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+  padding:0.5rem 0.75rem;border-radius:8px;cursor:pointer;transition:all .1s;
+}
+.add-btn:hover{border-color:var(--mauve);color:var(--mauve);}
 
-  .panel { display: none; width: 100%; max-width: 680px; }
-  .panel.active { display: block; }
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:100;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--mantle);border:1px solid var(--surface1);border-radius:12px;
+  padding:1.25rem;width:340px;max-width:90vw;
+}
+.modal h3{font-size:0.85rem;color:var(--mauve);margin-bottom:1rem;font-weight:500;}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem;}
+.field label{font-size:0.62rem;color:var(--overlay0);}
+.field input{
+  background:var(--crust);border:1px solid var(--surface0);
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.78rem;
+  padding:0.38rem 0.6rem;border-radius:6px;
+}
+.field input:focus{outline:none;border-color:var(--mauve);}
+.field input::placeholder{color:var(--overlay0);}
+.modal-hint{font-size:0.6rem;color:var(--overlay0);margin-bottom:1rem;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.btn-cancel{
+  background:none;border:1px solid var(--surface1);color:var(--overlay1);
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+  padding:0.35rem 0.9rem;border-radius:6px;cursor:pointer;
+}
+.btn-cancel:hover{border-color:var(--surface2);}
+.btn-save{
+  background:var(--mauve);color:var(--crust);border:none;
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;font-weight:600;
+  padding:0.35rem 0.9rem;border-radius:6px;cursor:pointer;opacity:1;transition:opacity .1s;
+}
+.btn-save:hover{opacity:.85;}
+.empty{font-size:0.72rem;color:var(--overlay0);padding:0.5rem 0;}
 
-  /* ── DICE PANEL ── */
-  .dice-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
+/* ── RESULT PANE ── */
+.result-pane{
+  grid-area:result;
+  border-left:1px solid var(--surface0);
+  display:flex;flex-direction:column;
+  padding:1.25rem 1rem;
+  justify-content:center;
+  gap:0;
+}
+.result-main{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;
+}
+.result-num{
+  font-size:4rem;font-weight:600;color:var(--mauve);line-height:1;
+  transition:color .15s;
+}
+.result-num.crit{color:var(--green);}
+.result-num.fail{color:var(--red);}
+.result-adv{display:flex;gap:14px;align-items:baseline;}
+.result-adv .dropped{font-size:2rem;font-weight:600;color:var(--surface2);text-decoration:line-through;}
+.result-tag{font-size:0.65rem;color:var(--overlay0);margin-top:5px;text-align:center;}
+.result-break{font-size:0.65rem;color:var(--overlay1);margin-top:4px;text-align:center;}
+.crit-flag{
+  font-size:0.62rem;color:var(--green);letter-spacing:0.08em;
+  text-align:center;margin-top:6px;min-height:14px;
+}
+.crit-flag.fail{color:var(--red);}
 
-  .die-btn {
-    aspect-ratio: 1;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    color: var(--subtext1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    transition: all 0.1s;
-    position: relative;
-    overflow: hidden;
-  }
+.result-weapon{
+  border-top:1px solid var(--surface0);padding-top:0.85rem;margin-top:0.85rem;
+}
+.result-weapon-name{font-size:0.65rem;color:var(--overlay0);margin-bottom:0.5rem;}
+.result-weapon-row{display:flex;gap:1rem;}
+.result-weapon-cell{flex:1;text-align:center;}
+.result-weapon-val{font-size:1.6rem;font-weight:600;}
+.result-weapon-val.hit{color:var(--blue);}
+.result-weapon-val.dmg{color:var(--peach);}
+.result-weapon-lbl{font-size:0.6rem;color:var(--overlay0);margin-top:2px;}
 
-  .die-btn .shortcut {
-    font-size: 0.6rem;
-    color: var(--overlay0);
-  }
+@keyframes flash{0%{opacity:.2;transform:scale(.88);}100%{opacity:1;transform:scale(1);}}
+.flash{animation:flash .16s ease;}
 
-  .die-btn:hover {
-    border-color: var(--mauve);
-    color: var(--mauve);
-    background: var(--surface0);
-  }
-
-  .die-btn:active { transform: scale(0.95); }
-
-  .die-btn.d20 { border-color: var(--lavender); color: var(--lavender); }
-  .die-btn.d20:hover { background: var(--surface0); }
-
-  .modifier-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .modifier-row label { font-size: 0.7rem; color: var(--overlay1); }
-
-  .modifier-row input {
-    width: 70px;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    text-align: center;
-  }
-
-  .modifier-row input:focus {
-    outline: none;
-    border-color: var(--mauve);
-  }
-
-  .count-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .count-row label { font-size: 0.7rem; color: var(--overlay1); }
-
-  .count-btn {
-    width: 28px; height: 28px;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    color: var(--subtext1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.1s;
-  }
-
-  .count-btn:hover { border-color: var(--mauve); color: var(--mauve); }
-
-  #count-display {
-    font-size: 0.85rem;
-    color: var(--text);
-    min-width: 20px;
-    text-align: center;
-  }
-
-  .adv-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 1.25rem;
-  }
-
-  .adv-btn {
-    padding: 0.35rem 0.8rem;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    color: var(--overlay1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.1s;
-  }
-
-  .adv-btn:hover { border-color: var(--surface2); color: var(--subtext1); }
-  .adv-btn.active-adv { border-color: var(--green); color: var(--green); background: var(--surface0); }
-  .adv-btn.active-dis { border-color: var(--red); color: var(--red); background: var(--surface0); }
-
-  .result-box {
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    position: relative;
-  }
-
-  .result-number {
-    font-size: 3rem;
-    font-weight: 600;
-    color: var(--mauve);
-    line-height: 1;
-    transition: all 0.1s;
-  }
-
-  .result-number.crit { color: var(--green); }
-  .result-number.fail { color: var(--red); }
-
-  .result-label {
-    font-size: 0.7rem;
-    color: var(--overlay0);
-    margin-top: 4px;
-  }
-
-  .result-breakdown {
-    font-size: 0.7rem;
-    color: var(--overlay1);
-    margin-top: 6px;
-  }
-
-  .history {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 1.5rem;
-    min-height: 24px;
-  }
-
-  .history-chip {
-    font-size: 0.65rem;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    color: var(--overlay1);
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
-
-  /* ── QUICK ROLL PANEL ── */
-  .section-label {
-    font-size: 0.65rem;
-    color: var(--overlay0);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    margin-top: 1.25rem;
-  }
-
-  .section-label:first-child { margin-top: 0; }
-
-  .saved-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 1rem;
-  }
-
-  .saved-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-    cursor: pointer;
-    transition: all 0.1s;
-    position: relative;
-  }
-
-  .saved-item:hover { border-color: var(--surface2); background: var(--surface0); }
-
-  .saved-key {
-    font-size: 0.65rem;
-    background: var(--surface1);
-    color: var(--overlay2);
-    padding: 2px 6px;
-    border-radius: 4px;
-    min-width: 22px;
-    text-align: center;
-  }
-
-  .saved-name {
-    flex: 1;
-    font-size: 0.8rem;
-    color: var(--subtext1);
-  }
-
-  .saved-notation {
-    font-size: 0.72rem;
-    color: var(--overlay1);
-  }
-
-  .saved-result {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--mauve);
-    min-width: 30px;
-    text-align: right;
-  }
-
-  .saved-del {
-    background: none;
-    border: none;
-    color: var(--overlay0);
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 0 2px;
-    font-family: 'JetBrains Mono', monospace;
-    transition: color 0.1s;
-  }
-
-  .saved-del:hover { color: var(--red); }
-
-  .add-form {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: var(--mantle);
-    border: 1px solid var(--surface0);
-    border-radius: 10px;
-    padding: 1rem;
-  }
-
-  .add-form-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .add-form input {
-    background: var(--crust);
-    border: 1px solid var(--surface0);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    flex: 1;
-  }
-
-  .add-form input:focus { outline: none; border-color: var(--mauve); }
-  .add-form input::placeholder { color: var(--overlay0); }
-
-  .add-form label {
-    font-size: 0.65rem;
-    color: var(--overlay0);
-    white-space: nowrap;
-  }
-
-  .btn-primary {
-    background: var(--mauve);
-    color: var(--crust);
-    border: none;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: opacity 0.1s;
-  }
-
-  .btn-primary:hover { opacity: 0.85; }
-
-  .empty-state {
-    font-size: 0.75rem;
-    color: var(--overlay0);
-    text-align: center;
-    padding: 1rem;
-  }
-
-  /* keyboard hint bar */
-  .hint-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0; right: 0;
-    background: var(--mantle);
-    border-top: 1px solid var(--surface0);
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    padding: 0.5rem 1rem;
-    flex-wrap: wrap;
-  }
-
-  .hint {
-    font-size: 0.62rem;
-    color: var(--overlay0);
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .hint kbd {
-    background: var(--surface0);
-    color: var(--subtext0);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-  }
-
-  .flash {
-    animation: flash 0.18s ease;
-  }
-
-  @keyframes flash {
-    0% { opacity: 0.3; transform: scale(0.92); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-
-  .crit-banner {
-    position: absolute;
-    top: 6px; right: 8px;
-    font-size: 0.6rem;
-    color: var(--green);
-    letter-spacing: 0.1em;
-  }
-
-  .adv-dice {
-    display: flex;
-    gap: 12px;
-    align-items: baseline;
-  }
-
-  .adv-dice .dim {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--surface2);
-    text-decoration: line-through;
-  }
+/* ── HINTS ── */
+.hint-bar{
+  grid-area:hints;border-top:1px solid var(--surface0);
+  display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap;
+  padding:0.42rem 1rem;background:var(--mantle);
+}
+.hint{font-size:0.6rem;color:var(--overlay0);display:flex;gap:3px;align-items:center;}
+kbd{
+  background:var(--surface0);color:var(--subtext0);
+  padding:1px 4px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:0.58rem;
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>⚔ dice roller</h1>
-  <span>catppuccin mocha · keyboard enabled</span>
+  <div class="tabs">
+    <button class="tab active" id="tab-dice" onclick="switchTab('dice')">dice</button>
+    <button class="tab" id="tab-weapons" onclick="switchTab('weapons')">weapons</button>
+  </div>
 </header>
 
-<div class="tabs">
-  <button class="tab active" id="tab-dice" onclick="switchTab('dice')">[ A ] roll dice</button>
-  <button class="tab" id="tab-quick" onclick="switchTab('quick')">[ B ] quick roll</button>
-</div>
-
-<!-- PANEL A: DICE -->
+<!-- DICE PANEL -->
 <div class="panel active" id="panel-dice">
   <div class="dice-grid">
-    <button class="die-btn" onclick="rollDie(4)" title="d4 (key: 1)">
-      <span>d4</span><span class="shortcut">1</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(6)" title="d6 (key: 2)">
-      <span>d6</span><span class="shortcut">2</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(8)" title="d8 (key: 3)">
-      <span>d8</span><span class="shortcut">3</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(10)" title="d10 (key: 4)">
-      <span>d10</span><span class="shortcut">4</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(12)" title="d12 (key: 5)">
-      <span>d12</span><span class="shortcut">5</span>
-    </button>
-    <button class="die-btn d20" onclick="rollDie(20)" title="d20 (key: 6)">
-      <span>d20</span><span class="shortcut">6</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(100)" title="d100 (key: 7)">
-      <span>d100</span><span class="shortcut">7</span>
-    </button>
-    <button class="die-btn" onclick="rollDie(lastDie)" title="re-roll (key: R)">
-      <span>↺</span><span class="shortcut">R</span>
-    </button>
+    <button class="die-btn" onclick="rollDie(4)"><span>d4</span><span class="k">1</span></button>
+    <button class="die-btn" onclick="rollDie(6)"><span>d6</span><span class="k">2</span></button>
+    <button class="die-btn" onclick="rollDie(8)"><span>d8</span><span class="k">3</span></button>
+    <button class="die-btn" onclick="rollDie(10)"><span>d10</span><span class="k">4</span></button>
+    <button class="die-btn" onclick="rollDie(12)"><span>d12</span><span class="k">5</span></button>
+    <button class="die-btn d20" onclick="rollDie(20)"><span>d20</span><span class="k">6</span></button>
+    <button class="die-btn" onclick="rollDie(100)"><span>d%</span><span class="k">7</span></button>
+    <button class="die-btn" onclick="rollDie(lastDie)"><span>↺</span><span class="k">space</span></button>
   </div>
 
-  <div class="count-row">
-    <label>dice count:</label>
+  <div class="controls-row">
+    <span class="ctrl-label">count</span>
     <button class="count-btn" onclick="changeCount(-1)">−</button>
     <span id="count-display">1</span>
     <button class="count-btn" onclick="changeCount(1)">+</button>
+    <span style="width:1px;height:18px;background:var(--surface0);margin:0 4px;"></span>
+    <span class="ctrl-label">mod</span>
+    <input class="mod-input" type="number" id="modifier" value="0" min="-99" max="99"/>
   </div>
 
-  <div class="modifier-row">
-    <label>modifier:</label>
-    <input type="number" id="modifier" value="0" min="-99" max="99" />
-  </div>
-
-  <div class="adv-row" id="adv-row">
-    <button class="adv-btn" id="btn-normal" onclick="setAdv('normal')">normal</button>
-    <button class="adv-btn" id="btn-adv" onclick="setAdv('adv')">advantage</button>
-    <button class="adv-btn" id="btn-dis" onclick="setAdv('dis')">disadvantage</button>
-  </div>
-
-  <div class="result-box" id="result-box">
-    <span class="crit-banner" id="crit-banner"></span>
-    <div id="adv-display" class="adv-dice" style="display:none"></div>
-    <div class="result-number" id="result-number">—</div>
-    <div class="result-label" id="result-label">pick a die</div>
-    <div class="result-breakdown" id="result-breakdown"></div>
+  <div class="adv-row">
+    <button class="adv-btn on-norm" id="btn-norm" onclick="setAdv('normal')">normal <span style="color:var(--overlay0);font-size:0.58rem;">[Q]</span></button>
+    <button class="adv-btn" id="btn-adv" onclick="setAdv('adv')">adv <span style="color:var(--overlay0);font-size:0.58rem;">[W]</span></button>
+    <button class="adv-btn" id="btn-dis" onclick="setAdv('dis')">dis <span style="color:var(--overlay0);font-size:0.58rem;">[E]</span></button>
   </div>
 
   <div class="history" id="history"></div>
 </div>
 
-<!-- PANEL B: QUICK ROLL -->
-<div class="panel" id="panel-quick">
-  <p class="section-label">saved rolls</p>
-
-  <div class="saved-list" id="saved-list">
-    <div class="empty-state" id="empty-state">no saved rolls yet — add one below</div>
+<!-- WEAPONS PANEL -->
+<div class="panel" id="panel-weapons">
+  <div class="weapon-list" id="weapon-list">
+    <div class="empty" id="w-empty">no weapons saved — add one below</div>
   </div>
+  <button class="add-btn" onclick="openModal()">+ add weapon / spell</button>
+</div>
 
-  <p class="section-label">add roll</p>
-  <div class="add-form">
-    <div class="add-form-row">
-      <label>name:</label>
-      <input type="text" id="new-name" placeholder="e.g. Fireball, Longsword hit" maxlength="30" />
+<!-- RESULT PANE (always visible) -->
+<div class="result-pane">
+  <div class="result-main">
+    <div id="adv-display" class="result-adv" style="display:none">
+      <span class="result-num" id="kept-num">—</span>
+      <span class="dropped" id="drop-num">—</span>
     </div>
-    <div class="add-form-row">
-      <label>notation:</label>
-      <input type="text" id="new-notation" placeholder="e.g. 8d6 or 1d8+4 or 2d6+3" />
-      <button class="btn-primary" onclick="addSaved()">save</button>
+    <div class="result-num" id="result-num" style="display:block">—</div>
+    <div class="result-tag" id="result-tag">pick a die</div>
+    <div class="result-break" id="result-break"></div>
+    <div class="crit-flag" id="crit-flag"></div>
+  </div>
+  <div class="result-weapon" id="result-weapon" style="display:none">
+    <div class="result-weapon-name" id="rw-name"></div>
+    <div class="result-weapon-row">
+      <div class="result-weapon-cell">
+        <div class="result-weapon-val hit" id="rw-hit">—</div>
+        <div class="result-weapon-lbl">to hit</div>
+      </div>
+      <div class="result-weapon-cell">
+        <div class="result-weapon-val dmg" id="rw-dmg">—</div>
+        <div class="result-weapon-lbl">damage</div>
+      </div>
     </div>
-    <div style="font-size:0.62rem; color: var(--overlay0);">
-      format: NdX+M — e.g. 2d6+3, 1d20-1, 4d6
+  </div>
+</div>
+
+<!-- ADD WEAPON MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>add weapon / spell</h3>
+    <div class="field">
+      <label>name</label>
+      <input id="w-name" placeholder="e.g. Longsword, Fireball" maxlength="30"/>
+    </div>
+    <div class="field">
+      <label>to hit</label>
+      <input id="w-hit" placeholder="e.g. 1d20+5"/>
+    </div>
+    <div class="field">
+      <label>damage</label>
+      <input id="w-dmg" placeholder="e.g. 1d8+3 or 8d6"/>
+    </div>
+    <div class="modal-hint">notation: NdX+M &nbsp;·&nbsp; leave to-hit blank for spells with no attack roll</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">cancel</button>
+      <button class="btn-save" onclick="saveWeapon()">save</button>
     </div>
   </div>
 </div>
 
 <div class="hint-bar">
-  <span class="hint"><kbd>A</kbd> dice tab</span>
-  <span class="hint"><kbd>B</kbd> quick tab</span>
-  <span class="hint"><kbd>1-7</kbd> roll die</span>
-  <span class="hint"><kbd>R</kbd> re-roll</span>
-  <span class="hint"><kbd>+/-</kbd> modifier</span>
-  <span class="hint"><kbd>Space</kbd> roll again</span>
-  <span class="hint"><kbd>1-9</kbd> quick roll (B tab)</span>
+  <span class="hint"><kbd>tab</kbd> switch panel</span>
+  <span class="hint"><kbd>1–7</kbd> roll die</span>
+  <span class="hint"><kbd>space</kbd> re-roll</span>
+  <span class="hint"><kbd>=</kbd><kbd>-</kbd> dice count</span>
+  <span class="hint"><kbd>Q/W/E</kbd> normal·adv·dis</span>
+  <span class="hint"><kbd>1–9</kbd> weapon (weapons tab)</span>
 </div>
 
 <script>
-  let lastDie = 20;
-  let diceCount = 1;
-  let advMode = 'normal';
-  let history = [];
-  let savedRolls = JSON.parse(localStorage.getItem('dnd_saved') || '[]');
-  let currentTab = 'dice';
+let lastDie = 20, diceCount = 1, advMode = 'normal';
+let history = [];
+let weapons = JSON.parse(localStorage.getItem('dnd_weapons2') || '[]');
+let currentTab = 'dice';
 
-  function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('panel-' + tab).classList.add('active');
-    if (tab === 'quick') renderSaved();
+// ── TAB ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'weapons') renderWeapons();
+}
+
+// ── ADV ──
+function setAdv(mode) {
+  advMode = mode;
+  document.getElementById('btn-norm').className = 'adv-btn' + (mode === 'normal' ? ' on-norm' : '');
+  document.getElementById('btn-adv').className  = 'adv-btn' + (mode === 'adv'    ? ' on-adv'  : '');
+  document.getElementById('btn-dis').className  = 'adv-btn' + (mode === 'dis'    ? ' on-dis'  : '');
+}
+setAdv('normal');
+
+// ── DICE ──
+function rnd(n) { return Math.floor(Math.random() * n) + 1; }
+
+function changeCount(d) {
+  diceCount = Math.max(1, Math.min(20, diceCount + d));
+  document.getElementById('count-display').textContent = diceCount;
+}
+
+function rollDie(sides) {
+  if (!sides || sides < 2) sides = lastDie;
+  lastDie = sides;
+  const mod = parseInt(document.getElementById('modifier').value) || 0;
+  const count = diceCount;
+  const rolls = Array.from({length: count}, () => rnd(sides));
+
+  let total, tag, breakdown = '', isCrit = false, isFail = false;
+  let advData = null;
+
+  if (advMode !== 'normal' && sides === 20 && count === 1) {
+    const r2 = rnd(20);
+    const a = rolls[0], b = r2;
+    const kept = advMode === 'adv' ? Math.max(a,b) : Math.min(a,b);
+    const dropped = advMode === 'adv' ? Math.min(a,b) : Math.max(a,b);
+    total = kept + mod;
+    advData = {kept, dropped, mod};
+    tag = '1d20' + fmtMod(mod) + ' (' + (advMode === 'adv' ? 'advantage' : 'disadvantage') + ')';
+    if (kept === 20) isCrit = true;
+    if (kept === 1) isFail = true;
+  } else {
+    const sum = rolls.reduce((a,b)=>a+b,0);
+    total = sum + mod;
+    tag = count + 'd' + sides + fmtMod(mod);
+    if (count > 1) breakdown = '[' + rolls.join(', ') + ']';
+    if (count === 1 && sides === 20 && rolls[0] === 20) isCrit = true;
+    if (count === 1 && sides === 20 && rolls[0] === 1) isFail = true;
   }
 
-  function setAdv(mode) {
-    advMode = mode;
-    document.getElementById('btn-normal').className = 'adv-btn' + (mode === 'normal' ? '' : '');
-    document.getElementById('btn-adv').className = 'adv-btn' + (mode === 'adv' ? ' active-adv' : '');
-    document.getElementById('btn-dis').className = 'adv-btn' + (mode === 'dis' ? ' active-dis' : '');
-    if (mode === 'normal') document.getElementById('btn-normal').classList.add('active-adv');
-    else document.getElementById('btn-normal').classList.remove('active-adv');
-  }
+  showResult(total, tag, breakdown, isCrit, isFail, advData);
+  document.getElementById('result-weapon').style.display = 'none';
+  addHistory(tag + ' = ' + total);
+}
 
-  setAdv('normal');
+function fmtMod(m) { return m > 0 ? '+'+m : m < 0 ? ''+m : ''; }
 
-  function r(sides) { return Math.floor(Math.random() * sides) + 1; }
+function showResult(total, tag, breakdown, isCrit, isFail, advData) {
+  const numEl = document.getElementById('result-num');
+  const advEl = document.getElementById('adv-display');
+  const keptEl = document.getElementById('kept-num');
+  const dropEl = document.getElementById('drop-num');
+  const tagEl = document.getElementById('result-tag');
+  const breakEl = document.getElementById('result-break');
+  const critEl = document.getElementById('crit-flag');
 
-  function changeCount(delta) {
-    diceCount = Math.max(1, Math.min(20, diceCount + delta));
-    document.getElementById('count-display').textContent = diceCount;
-  }
+  const cls = isCrit ? 'result-num crit' : isFail ? 'result-num fail' : 'result-num';
 
-  function rollDie(sides) {
-    if (!sides || sides < 2) sides = lastDie;
-    lastDie = sides;
-    const mod = parseInt(document.getElementById('modifier').value) || 0;
-    const count = diceCount;
-
-    let rolls = [];
-    for (let i = 0; i < count; i++) rolls.push(r(sides));
-
-    let mainRoll, breakdown, total, isCrit = false, isFail = false;
-    let advDisplay = null;
-
-    if (advMode !== 'normal' && sides === 20 && count === 1) {
-      const r2 = r(sides);
-      const r1 = rolls[0];
-      const kept = advMode === 'adv' ? Math.max(r1, r2) : Math.min(r1, r2);
-      const dropped = advMode === 'adv' ? Math.min(r1, r2) : Math.max(r1, r2);
-      mainRoll = kept;
-      total = kept + mod;
-      advDisplay = { kept, dropped, mod, label: advMode === 'adv' ? 'advantage' : 'disadvantage' };
-      breakdown = '';
-      if (kept === 20) { isCrit = true; }
-      if (kept === 1) { isFail = true; }
-    } else {
-      const sum = rolls.reduce((a, b) => a + b, 0);
-      total = sum + mod;
-      mainRoll = sum;
-      breakdown = count > 1 ? '[' + rolls.join(', ') + ']' + (mod !== 0 ? (mod > 0 ? ' +' : ' ') + mod : '') : '';
-      if (count === 1 && sides === 20 && rolls[0] === 20) isCrit = true;
-      if (count === 1 && sides === 20 && rolls[0] === 1) isFail = true;
-    }
-
-    const numEl = document.getElementById('result-number');
-    const labelEl = document.getElementById('result-label');
-    const breakEl = document.getElementById('result-breakdown');
-    const critEl = document.getElementById('crit-banner');
-    const advEl = document.getElementById('adv-display');
-
-    numEl.className = 'result-number' + (isCrit ? ' crit' : isFail ? ' fail' : '');
+  if (advData) {
+    numEl.style.display = 'none';
+    advEl.style.display = 'flex';
+    keptEl.className = cls;
+    keptEl.textContent = advData.kept + fmtMod(advData.mod);
+    dropEl.textContent = advData.dropped;
+    advEl.classList.add('flash');
+    setTimeout(() => advEl.classList.remove('flash'), 200);
+  } else {
+    advEl.style.display = 'none';
+    numEl.style.display = 'block';
+    numEl.className = cls;
     numEl.textContent = total;
     numEl.classList.add('flash');
     setTimeout(() => numEl.classList.remove('flash'), 200);
+  }
 
-    if (advDisplay) {
-      advEl.style.display = 'flex';
-      numEl.style.display = 'none';
-      advEl.innerHTML = `
-        <span class="${advDisplay.kept === advDisplay.dropped ? 'result-number' : (isCrit ? 'result-number crit' : isFail ? 'result-number fail' : 'result-number')}">${advDisplay.kept + (mod !== 0 ? (mod > 0 ? '+' : '') + mod : '')}</span>
-        <span class="dim">${advDisplay.dropped}</span>
-      `;
-      advEl.classList.add('flash');
-      setTimeout(() => advEl.classList.remove('flash'), 200);
+  tagEl.textContent = tag;
+  breakEl.textContent = breakdown;
+  critEl.className = 'crit-flag' + (isFail ? ' fail' : '');
+  critEl.textContent = isCrit ? '★ natural 20' : isFail ? '☆ natural 1' : '';
+}
+
+function addHistory(entry) {
+  history.unshift(entry);
+  if (history.length > 10) history.pop();
+  document.getElementById('history').innerHTML =
+    history.map(h => `<span class="hchip">${h}</span>`).join('');
+}
+
+// ── WEAPONS ──
+function parseNotation(str) {
+  if (!str) return null;
+  str = str.trim().replace(/\s/g,'').toLowerCase();
+  const m = str.match(/^(\d+)d(\d+)([+-]\d+)?$/);
+  if (!m) return null;
+  return {count:+m[1], sides:+m[2], mod:+(m[3]||0)};
+}
+
+function rollNotation(str) {
+  const p = parseNotation(str);
+  if (!p) return null;
+  const rolls = Array.from({length:p.count}, () => rnd(p.sides));
+  const total = rolls.reduce((a,b)=>a+b,0) + p.mod;
+  const nat = p.count === 1 && p.sides === 20 ? rolls[0] : null;
+  return {total, rolls, nat};
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('w-name').focus();
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  ['w-name','w-hit','w-dmg'].forEach(id => document.getElementById(id).value = '');
+}
+
+function saveWeapon() {
+  const name = document.getElementById('w-name').value.trim();
+  const hit = document.getElementById('w-hit').value.trim();
+  const dmg = document.getElementById('w-dmg').value.trim();
+  if (!name || !dmg) return;
+  if (hit && !parseNotation(hit)) { alert('invalid to-hit notation'); return; }
+  if (!parseNotation(dmg)) { alert('invalid damage notation'); return; }
+  weapons.push({name, hit: hit||'', dmg, lastHit:null, lastDmg:null});
+  localStorage.setItem('dnd_weapons2', JSON.stringify(weapons));
+  closeModal();
+  renderWeapons();
+}
+
+function deleteWeapon(i) {
+  weapons.splice(i,1);
+  localStorage.setItem('dnd_weapons2', JSON.stringify(weapons));
+  renderWeapons();
+}
+
+function rollWeapon(i, type) {
+  const w = weapons[i];
+  let hitResult = null, dmgResult = null;
+
+  if (type === 'both' || type === 'hit') {
+    if (w.hit) {
+      hitResult = rollNotation(w.hit);
+      weapons[i].lastHit = hitResult.total;
+    }
+  }
+  if (type === 'both' || type === 'dmg') {
+    dmgResult = rollNotation(w.dmg);
+    weapons[i].lastDmg = dmgResult.total;
+  }
+
+  localStorage.setItem('dnd_weapons2', JSON.stringify(weapons));
+  renderWeapons();
+
+  // show in result pane
+  const isCrit = hitResult && hitResult.nat === 20;
+  const isFail = hitResult && hitResult.nat === 1;
+  const displayVal = hitResult ? hitResult.total : (dmgResult ? dmgResult.total : 0);
+  const tag = type === 'hit' ? w.name + ' to hit' : type === 'dmg' ? w.name + ' dmg' : w.name;
+
+  if (hitResult || dmgResult) {
+    showResult(displayVal, tag, '', isCrit, isFail, null);
+    if (hitResult && dmgResult) {
+      document.getElementById('result-weapon').style.display = 'block';
+      document.getElementById('rw-name').textContent = w.name;
+      document.getElementById('rw-hit').textContent = hitResult.total;
+      document.getElementById('rw-dmg').textContent = dmgResult.total;
     } else {
-      advEl.style.display = 'none';
-      numEl.style.display = '';
+      document.getElementById('result-weapon').style.display = 'none';
     }
-
-    const modStr = mod !== 0 ? (mod > 0 ? '+' + mod : mod) : '';
-    labelEl.textContent = count + 'd' + sides + modStr + (advDisplay ? ' (' + advDisplay.label + ')' : '');
-    breakEl.textContent = breakdown;
-    critEl.textContent = isCrit ? '★ natural 20' : isFail ? '☆ natural 1' : '';
-
-    addHistory(count + 'd' + sides + modStr + ' = ' + total);
+    addHistory(tag + ': ' + (hitResult ? 'hit '+hitResult.total : '') + (hitResult && dmgResult ? ' / ' : '') + (dmgResult ? 'dmg '+dmgResult.total : ''));
   }
+}
 
-  function addHistory(entry) {
-    history.unshift(entry);
-    if (history.length > 12) history.pop();
-    const el = document.getElementById('history');
-    el.innerHTML = history.map(h => `<span class="history-chip">${h}</span>`).join('');
+function renderWeapons() {
+  const list = document.getElementById('weapon-list');
+  if (weapons.length === 0) {
+    list.innerHTML = '<div class="empty" id="w-empty">no weapons saved — add one below</div>';
+    return;
   }
-
-  function parseNotation(str) {
-    str = str.trim().toLowerCase().replace(/\s/g, '');
-    const m = str.match(/^(\d+)d(\d+)([+-]\d+)?$/);
-    if (!m) return null;
-    return { count: parseInt(m[1]), sides: parseInt(m[2]), mod: parseInt(m[3] || 0) };
-  }
-
-  function rollNotation(notation) {
-    const p = parseNotation(notation);
-    if (!p) return null;
-    let rolls = [];
-    for (let i = 0; i < p.count; i++) rolls.push(r(p.sides));
-    const sum = rolls.reduce((a, b) => a + b, 0) + p.mod;
-    return { total: sum, rolls, ...p };
-  }
-
-  function addSaved() {
-    const name = document.getElementById('new-name').value.trim();
-    const notation = document.getElementById('new-notation').value.trim();
-    if (!name || !notation) return;
-    if (!parseNotation(notation)) { alert('invalid notation — use format like 2d6+3'); return; }
-    savedRolls.push({ name, notation, lastResult: null });
-    savePersist();
-    document.getElementById('new-name').value = '';
-    document.getElementById('new-notation').value = '';
-    renderSaved();
-  }
-
-  function deleteSaved(i) {
-    savedRolls.splice(i, 1);
-    savePersist();
-    renderSaved();
-  }
-
-  function rollSaved(i) {
-    const s = savedRolls[i];
-    const result = rollNotation(s.notation);
-    if (!result) return;
-    savedRolls[i].lastResult = result.total;
-    savePersist();
-    renderSaved();
-    addHistory(s.name + ': ' + s.notation + ' = ' + result.total);
-  }
-
-  function savePersist() {
-    localStorage.setItem('dnd_saved', JSON.stringify(savedRolls));
-  }
-
-  function renderSaved() {
-    const list = document.getElementById('saved-list');
-    const empty = document.getElementById('empty-state');
-    if (savedRolls.length === 0) {
-      list.innerHTML = '<div class="empty-state" id="empty-state">no saved rolls yet — add one below</div>';
-      return;
-    }
-    list.innerHTML = savedRolls.map((s, i) => `
-      <div class="saved-item" onclick="rollSaved(${i})">
-        <span class="saved-key">${i + 1}</span>
-        <span class="saved-name">${s.name}</span>
-        <span class="saved-notation">${s.notation}</span>
-        <span class="saved-result">${s.lastResult !== null ? s.lastResult : '—'}</span>
-        <button class="saved-del" onclick="event.stopPropagation(); deleteSaved(${i})">✕</button>
+  list.innerHTML = weapons.map((w, i) => {
+    const hasHit = !!w.hit;
+    const hasLast = w.lastHit !== null || w.lastDmg !== null;
+    return `
+    <div class="weapon-card">
+      <div class="weapon-header" onclick="rollWeapon(${i},'both')">
+        <span class="w-key">${i+1}</span>
+        <span class="w-name">${w.name}</span>
+        <div class="w-btns" onclick="event.stopPropagation()">
+          ${hasHit ? `<button class="w-roll-btn hit ${w.lastHit!==null?'last':''}" onclick="rollWeapon(${i},'hit')">hit</button>` : ''}
+          <button class="w-roll-btn dmg ${w.lastDmg!==null?'last':''}" onclick="rollWeapon(${i},'dmg')">dmg</button>
+          <button class="w-del" onclick="deleteWeapon(${i})">✕</button>
+        </div>
       </div>
-    `).join('');
+      <div class="w-last">
+        ${hasHit ? `<span>hit: <span class="hit-val">${w.lastHit !== null ? w.lastHit : '—'}</span></span>` : ''}
+        <span>dmg: <span class="dmg-val">${w.lastDmg !== null ? w.lastDmg : '—'}</span></span>
+        <span style="color:var(--overlay0);font-size:0.58rem;margin-left:auto;">${hasHit?w.hit+' / ':''} ${w.dmg}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderWeapons();
+
+// ── KEYBOARD ──
+const DICE_KEYS = {'1':4,'2':6,'3':8,'4':10,'5':12,'6':20,'7':100};
+
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input') return;
+  const key = e.key;
+  const kl = key.toLowerCase();
+
+  if (key === 'Tab') {
+    e.preventDefault();
+    switchTab(currentTab === 'dice' ? 'weapons' : 'dice');
+    return;
   }
 
-  renderSaved();
+  if (kl === 'q') { setAdv('normal'); return; }
+  if (kl === 'w') { setAdv('adv'); return; }
+  if (kl === 'e') { setAdv('dis'); return; }
 
-  const DICE_KEYS = { '1': 4, '2': 6, '3': 8, '4': 10, '5': 12, '6': 20, '7': 100 };
+  if (currentTab === 'dice') {
+    if (DICE_KEYS[key]) { rollDie(DICE_KEYS[key]); return; }
+    if (key === ' ') { e.preventDefault(); rollDie(lastDie); return; }
+    if (key === '=' || key === '+') { changeCount(1); return; }
+    if (key === '-') { changeCount(-1); return; }
+  }
 
-  document.addEventListener('keydown', (e) => {
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input') return;
-
-    const key = e.key.toLowerCase();
-
-    if (key === 'a') { switchTab('dice'); return; }
-    if (key === 'b') { switchTab('quick'); return; }
-
-    if (currentTab === 'dice') {
-      if (DICE_KEYS[e.key]) { rollDie(DICE_KEYS[e.key]); return; }
-      if (key === 'r') { rollDie(lastDie); return; }
-      if (key === ' ') { e.preventDefault(); rollDie(lastDie); return; }
-      if (key === '=' || key === '+') { changeCount(1); return; }
-      if (key === '-') { changeCount(-1); return; }
+  if (currentTab === 'weapons') {
+    const idx = parseInt(key) - 1;
+    if (!isNaN(idx) && idx >= 0 && idx < weapons.length) {
+      rollWeapon(idx, 'both');
     }
+  }
+});
 
-    if (currentTab === 'quick') {
-      const idx = parseInt(e.key) - 1;
-      if (!isNaN(idx) && idx >= 0 && idx < savedRolls.length) {
-        rollSaved(idx);
-        return;
-      }
-    }
-  });
+// close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+// enter to save modal
+document.getElementById('modal').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveWeapon();
+  if (e.key === 'Escape') closeModal();
+});
 </script>
 </body>
 </html>
