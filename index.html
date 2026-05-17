@@ -59,7 +59,7 @@ header{
   display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0.5rem;
 }
 .die-btn{
-  aspect-ratio:1.13;background:var(--mantle);border:1px solid var(--surface0);
+  aspect-ratio:1.07;background:var(--mantle);border:1px solid var(--surface0);
   color:var(--subtext1);font-family:'JetBrains Mono',monospace;
   font-size:0.72rem;font-weight:500;cursor:pointer;border-radius:7px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -102,11 +102,6 @@ header{
 .adv-btn.on-adv{border-color:var(--green);color:var(--green);background:var(--surface0);}
 .adv-btn.on-dis{border-color:var(--red);color:var(--red);background:var(--surface0);}
 
-.history{display:flex;flex-wrap:wrap;gap:3px;margin-top:0.4rem;}
-.hchip{
-  font-size:0.58rem;background:var(--mantle);border:1px solid var(--surface0);
-  color:var(--overlay1);padding:2px 6px;border-radius:3px;
-}
 
 /* ── WEAPONS PANEL ── */
 .weapon-list{display:flex;flex-direction:column;gap:5px;margin-bottom:0.5rem;}
@@ -315,7 +310,7 @@ kbd{
     </div>
   </div>
 
-  <div class="history" id="history"></div>
+
 </div>
 
 <!-- WEAPONS PANEL -->
@@ -393,14 +388,11 @@ kbd{
   <span class="hint"><kbd>=</kbd><kbd>-</kbd> count &nbsp;·&nbsp; <kbd>↑</kbd><kbd>↓</kbd> count</span>
   <span class="hint"><kbd>shift</kbd>+<kbd>=/-</kbd> mod &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> mod</span>
   <span class="hint"><kbd>Q/W/E</kbd> normal·adv·dis</span>
-  <span class="hint"><kbd>Z/Y</kbd> undo/redo</span>
   <span class="hint"><kbd>1–9</kbd> weapon (weapons tab)</span>
 </div>
 
 <script>
 let lastDie = 20, diceCount = 1, advMode = 'normal';
-let history = [];
-let redoStack = [];
 let weapons = JSON.parse(localStorage.getItem('dnd_weapons2') || '[]');
 let currentTab = 'dice';
 
@@ -479,7 +471,6 @@ function rollDie(sides) {
 
   showResult(total, tag, breakdown, isCrit, isFail, advData);
   document.getElementById('result-weapon').style.display = 'none';
-  addHistory(tag + ' = ' + total);
 }
 
 function fmtMod(m) { return m > 0 ? '+'+m : m < 0 ? ''+m : ''; }
@@ -522,56 +513,6 @@ function showResult(total, tag, breakdown, isCrit, isFail, advData) {
   
   // Keep adv display visible until next roll clears it
   // Don't hide it automatically
-}
-
-function addHistory(entry) {
-  history.unshift(entry);
-  redoStack = []; // clear redo stack on new action
-  if (history.length > 10) history.pop();
-  document.getElementById('history').innerHTML =
-    history.map(h => `<span class="hchip">${h}</span>`).join('');
-}
-
-function undo() {
-  if (history.length === 0) return;
-  const last = history.shift();
-  redoStack.unshift(last);
-  if (history.length === 0) {
-    document.getElementById('result-num').style.display = 'block';
-    document.getElementById('result-num').textContent = '—';
-    document.getElementById('result-tag').textContent = 'pick a die';
-    document.getElementById('result-break').textContent = '';
-    document.getElementById('crit-flag').textContent = '';
-    document.getElementById('adv-display').classList.remove('show');
-    document.getElementById('result-weapon').style.display = 'none';
-  } else {
-    const prev = history[0];
-    const match = prev.match(/^(.+) = (\d+)$/);
-    if (match) {
-      const tag = match[1];
-      const total = parseInt(match[2]);
-      showResult(total, tag, '', false, false, null);
-      document.getElementById('result-weapon').style.display = 'none';
-    }
-  }
-  document.getElementById('history').innerHTML =
-    history.map(h => `<span class="hchip">${h}</span>`).join('');
-}
-
-function redo() {
-  if (redoStack.length === 0) return;
-  const next = redoStack.shift();
-  history.unshift(next);
-  if (history.length > 10) history.pop();
-  const match = next.match(/^(.+) = (\d+)$/);
-  if (match) {
-    const tag = match[1];
-    const total = parseInt(match[2]);
-    showResult(total, tag, '', false, false, null);
-    document.getElementById('result-weapon').style.display = 'none';
-  }
-  document.getElementById('history').innerHTML =
-    history.map(h => `<span class="hchip">${h}</span>`).join('');
 }
 
 // ── WEAPONS ──
@@ -728,7 +669,6 @@ function rollWeapon(i, type) {
     } else {
       document.getElementById('result-weapon').style.display = 'none';
     }
-    addHistory(tag + ': ' + (hitResult ? 'hit '+hitResult.total : '') + (hitResult && dmgResult ? ' / ' : '') + (dmgResult ? 'dmg '+dmgResult.total : ''));
   }
 }
 
@@ -808,9 +748,6 @@ document.addEventListener('keydown', e => {
   if (kl === 'q') { setAdv('normal'); return; }
   if (kl === 'w') { setAdv('adv'); return; }
   if (kl === 'e') { setAdv('dis'); return; }
-  
-  if (kl === 'z') { undo(); return; }
-  if (kl === 'y') { redo(); return; }
 
   if (currentTab === 'dice') {
     if (DICE_KEYS[key]) { rollDie(DICE_KEYS[key]); return; }
