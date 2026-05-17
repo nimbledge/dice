@@ -46,7 +46,7 @@ header{
 .tab:hover:not(.active){color:var(--subtext1);}
 
 /* ── LEFT PANELS ── */
-.panel{display:none;grid-area:left;padding:0.6rem 0.85rem;height:calc(100vh - 68px);overflow-y:auto;}
+.panel{display:none;grid-area:left;padding:0.6rem 0.85rem;height:calc(100vh - 68px);overflow:hidden;}
 .panel.active{display:block;}
 #panel-dice{padding-top:0.5rem;padding-bottom:0.4rem;}
 #panel-weapons{padding-top:0.5rem;padding-bottom:0.4rem;}
@@ -204,31 +204,31 @@ header{
   flex:1;
 }
 .result-num{
-  font-size:3.5rem;font-weight:600;color:var(--mauve);line-height:1;
+  font-size:5rem;font-weight:600;color:var(--mauve);line-height:1;
   transition:color .15s;
 }
 .result-num.crit{color:var(--green);}
 .result-num.fail{color:var(--red);}
-.result-adv{display:flex;gap:12px;align-items:baseline;}
-.result-adv .dropped{font-size:1.8rem;font-weight:600;color:var(--surface2);text-decoration:line-through;}
-.result-tag{font-size:0.6rem;color:var(--overlay0);margin-top:4px;text-align:center;}
-.result-break{font-size:0.6rem;color:var(--overlay1);margin-top:3px;text-align:center;}
+.result-adv{display:flex;gap:16px;align-items:baseline;}
+.result-adv .dropped{font-size:2.2rem;font-weight:600;color:var(--surface2);text-decoration:line-through;}
+.result-tag{font-size:0.7rem;color:var(--overlay0);margin-top:6px;text-align:center;}
+.result-break{font-size:0.7rem;color:var(--overlay1);margin-top:4px;text-align:center;}
 .crit-flag{
-  font-size:0.58rem;color:var(--green);letter-spacing:0.08em;
-  text-align:center;margin-top:5px;min-height:14px;
+  font-size:0.65rem;color:var(--green);letter-spacing:0.08em;
+  text-align:center;margin-top:6px;min-height:14px;
 }
 .crit-flag.fail{color:var(--red);}
 
 .result-weapon{
-  border-top:1px solid var(--surface0);padding-top:0.75rem;margin-top:0.75rem;
+  border-top:1px solid var(--surface0);padding-top:0.85rem;margin-top:0.85rem;
 }
-.result-weapon-name{font-size:0.6rem;color:var(--overlay0);margin-bottom:0.45rem;}
-.result-weapon-row{display:flex;gap:0.9rem;}
+.result-weapon-name{font-size:0.65rem;color:var(--overlay0);margin-bottom:0.5rem;}
+.result-weapon-row{display:flex;gap:1.2rem;}
 .result-weapon-cell{flex:1;text-align:center;}
-.result-weapon-val{font-size:1.4rem;font-weight:600;}
+.result-weapon-val{font-size:2rem;font-weight:600;}
 .result-weapon-val.hit{color:var(--blue);}
 .result-weapon-val.dmg{color:var(--peach);}
-.result-weapon-lbl{font-size:0.55rem;color:var(--overlay0);margin-top:2px;}
+.result-weapon-lbl{font-size:0.6rem;color:var(--overlay0);margin-top:3px;}
 
 @keyframes flash{0%{opacity:.2;transform:scale(.88);}100%{opacity:1;transform:scale(1);}}
 .flash{animation:flash .16s ease;}
@@ -259,9 +259,9 @@ kbd{
 <div class="panel active" id="panel-dice">
   <div class="dice-grid">
     <button class="die-btn d20" onclick="rollDie(20)"><span>d20</span><span class="k">1</span></button>
-    <button class="die-btn" onclick="rollDie(6)"><span>d6</span><span class="k">2</span></button>
-    <button class="die-btn" onclick="rollDie(8)"><span>d8</span><span class="k">3</span></button>
-    <button class="die-btn" onclick="rollDie(10)"><span>d10</span><span class="k">4</span></button>
+    <button class="die-btn" onclick="rollDie(10)"><span>d10</span><span class="k">2</span></button>
+    <button class="die-btn" onclick="rollDie(6)"><span>d6</span><span class="k">3</span></button>
+    <button class="die-btn" onclick="rollDie(8)"><span>d8</span><span class="k">4</span></button>
     <button class="die-btn" onclick="rollDie(12)"><span>d12</span><span class="k">5</span></button>
     <button class="die-btn" onclick="rollDie(4)"><span>d4</span><span class="k">6</span></button>
     <button class="die-btn" onclick="rollDie(100)"><span>d%</span><span class="k">7</span></button>
@@ -348,7 +348,7 @@ kbd{
 
 <div class="hint-bar">
   <span class="hint"><kbd>tab</kbd> switch panel</span>
-  <span class="hint"><kbd>1–7</kbd> roll die</span>
+  <span class="hint"><kbd>1</kbd>d20 <kbd>2</kbd>d10 <kbd>3</kbd>d6 <kbd>4</kbd>d8 <kbd>5</kbd>d12 <kbd>6</kbd>d4 <kbd>7</kbd>d%</span>
   <span class="hint"><kbd>space</kbd> re-roll</span>
   <span class="hint"><kbd>=</kbd><kbd>-</kbd> dice count</span>
   <span class="hint"><kbd>Q/W/E</kbd> normal·adv·dis</span>
@@ -585,7 +585,7 @@ function renderWeapons() {
 renderWeapons();
 
 // ── KEYBOARD ──
-const DICE_KEYS = {'1':4,'2':6,'3':8,'4':10,'5':12,'6':20,'7':100};
+const DICE_KEYS = {'1':20,'2':10,'3':6,'4':8,'5':12,'6':4,'7':100};
 
 document.addEventListener('keydown', e => {
   const tag = e.target.tagName.toLowerCase();
